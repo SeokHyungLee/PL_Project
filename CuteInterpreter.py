@@ -734,4 +734,5 @@ def Test_All():
         input = raw_input("> ")
         print("..."),
         Test_method(input)
+        
 Test_All()
