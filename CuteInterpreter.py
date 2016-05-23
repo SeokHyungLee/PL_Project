@@ -387,14 +387,14 @@ class CuteInterpreter(object):
                 "Wrong operator"
 
         else:
-            #adfsasdfsadfasdfsadf
+            print "Error : Operand is not Number!!"
             return None
 
     def lookuptable(self, id):
         if id in Dic:
             return Dic.get(id)
         else:
-            print "DIC id is null ERROR!"
+            print "Error : id is not in Dic!!"
             return None;
 
     def run_func(self, func_node):
@@ -469,20 +469,18 @@ class CuteInterpreter(object):
                         Dic[id.value] = value
                 else:
                     Dic[id.value] = value
-                print Dic
+                #사전 내용 찍어보기
+                #print Dic
 
             else:
-                print("ERROR!")
-                return None
 
-        rhs1 = self.run_expr(rhs1)
+                print("ERROR : Can't insert the id!!")
+                return None
 
         if func_node.type is TokenType.DEFINE:
             id = rhs1
             value = rhs2
             insertTable(id, value)
-
-
 
         elif func_node.type is TokenType.CAR:
             if(rhs1.type is TokenType.ID):
@@ -554,7 +552,9 @@ class CuteInterpreter(object):
 
 
         elif func_node.type is TokenType.NULL_Q:
-            if list_is_null(rhs1): return self.TRUE_NODE
+            if(rhs1.type is TokenType.ID):
+                rhs1 = self.lookuptable(rhs1.value)
+            if list_is_null(rhs1):return self.TRUE_NODE
             return self.FALSE_NODE
 
         elif func_node.type is TokenType.NOT:
@@ -564,25 +564,20 @@ class CuteInterpreter(object):
                 return self.TRUE_NODE
 
         elif func_node.type is TokenType.COND:
-            if(rhs1.type is TokenType.ID):
-                rhs1 = self.lookuptable(rhs1.value)
-
-            result = None
-            if rhs1.value.type is TokenType.LIST:
-                result = self.run_expr(rhs1.value)
-            else:
-                result = rhs1.value
-
-            if result.type not in [TokenType.TRUE, TokenType.FALSE]:
-                print("Type Error!")
-                return None
-
-            if result.type is TokenType.FALSE:
-                n_node = pop_node_from_cond_list(rhs2)
-
-                return self.run_func(create_cond_node(n_node, True))
-
-            return self.run_expr(rhs1.value.next)
+            while rhs1 is not None:
+                if(rhs1.type is TokenType.ID):
+                    rhs1 = self.lookuptable(rhs1.value)
+                if(rhs1.value.type is TokenType.LIST):
+                    cond = self.run_expr(rhs1.value)
+                else:
+                    cond = rhs1.value
+                if(cond.type not in [TokenType.TRUE, TokenType.FALSE]):
+                    print"Type Error!"
+                    return None
+                #print" "
+                if(cond.value is not TokenType.TRUE):
+                    rhs1 = rhs1.next
+                return self.run_expr(rhs1.value.next)
 
         else:
             return None
@@ -593,7 +588,6 @@ class CuteInterpreter(object):
         """
         if root_node is None:
             return None
-
         if root_node.type is TokenType.ID:
             return root_node
         elif root_node.type is TokenType.INT:
@@ -632,7 +626,6 @@ class CuteInterpreter(object):
             print "expected a procedure that can be applied to arguments"
             print "Token Type is "+ op_code.value
             return None
-
 
 
 def print_node(node):
@@ -734,5 +727,5 @@ def Test_All():
         input = raw_input("> ")
         print("..."),
         Test_method(input)
-        
+
 Test_All()
