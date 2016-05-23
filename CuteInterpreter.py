@@ -466,7 +466,8 @@ class CuteInterpreter(object):
                         result = self.run_expr(value)
                         Dic[id.value] = result
                     else:
-                        Dic[id.value] = value
+                        result = self.create_quote_node(rhs2)
+                        Dic[id.value] = result
                 else:
                     Dic[id.value] = value
                 print Dic
@@ -474,8 +475,6 @@ class CuteInterpreter(object):
             else:
                 print("ERROR!")
                 return None
-
-        rhs1 = self.run_expr(rhs1)
 
         if func_node.type is TokenType.DEFINE:
             id = rhs1
@@ -564,14 +563,24 @@ class CuteInterpreter(object):
                 return self.TRUE_NODE
 
         elif func_node.type is TokenType.COND:
-            if(rhs1.type is TokenType.ID):
-                rhs1 = self.lookuptable(rhs1.value)
-
             result = None
-            if rhs1.value.type is TokenType.LIST:
-                result = self.run_expr(rhs1.value)
+            if rhs1.type is TokenType.LIST:
+              result = self.run_expr(rhs1)
             else:
                 result = rhs1.value
+
+            while rhs1 is not None:
+
+                if rhs1.value.type is TokenType.LIST:
+                    Cond = self.run_expr(rhs1.value)
+                else:
+                    Cond = rhs1.value
+                if Cond.type not in [TokenType.TRUE, TokenType.FALSE]:
+                    print ("Type Error!")
+                    return None
+                if Cond.type is not TokenType.TRUE:
+                    rhs1 = rhs1.next
+                return self.run_expr(rhs1.value.next)
 
             if result.type not in [TokenType.TRUE, TokenType.FALSE]:
                 print("Type Error!")
@@ -579,9 +588,7 @@ class CuteInterpreter(object):
 
             if result.type is TokenType.FALSE:
                 n_node = pop_node_from_cond_list(rhs2)
-
                 return self.run_func(create_cond_node(n_node, True))
-
             return self.run_expr(rhs1.value.next)
 
         else:
@@ -630,7 +637,7 @@ class CuteInterpreter(object):
         else:
             print "application: not a procedure;"
             print "expected a procedure that can be applied to arguments"
-            print "Token Type is "+ op_code.value
+            print "Token Type is ", op_code.value
             return None
 
 
@@ -709,7 +716,7 @@ def Test_method(input):
     node = test_basic_paser.parse_expr()
     cute_inter = CuteInterpreter()
     result = cute_inter.run_expr(node)
-    print print_node(result)
+    print print_node(result), result
 
 def Test_All():
     """
@@ -729,9 +736,8 @@ def Test_All():
     Test_method("( > 1 5 )")
     Test_method("( cond ( ( null? ' ( 1 2 3 ) ) 1 ) ( ( > 100 10 ) 2 ) ( #T 3 ) )")
     """
-
-    while(True):
-        input = raw_input("> ")
-        print("..."),
-        Test_method(input)
+    i = ""
+    while(i != 'x'):
+        i = raw_input("> ")
+        print("..."),Test_method(i)
 Test_All()
