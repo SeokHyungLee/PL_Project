@@ -207,8 +207,6 @@ class Node (object):
         self.value = value
         self.type  = type
 
-
-
     def set_last_next(self, next_node):
         if self.next is not None:
             self.next.set_last_next(next_node)
@@ -230,10 +228,8 @@ class Node (object):
             return get_list_tail(self)
         return self
 
-
     def __str__(self):
         result = ""
-
         if   self.type is TokenType.ID:
             result = "["+self.value+"]"
         elif self.type is TokenType.INT:
@@ -285,7 +281,6 @@ class BasicPaser(object):
 
     def _create_node(self, token):
         if token is None: return None
-
         if   token.type is CuteType.INT:     return Node(TokenType.INT,  token.lexeme)
         elif token.type is CuteType.ID:      return Node(TokenType.ID,   token.lexeme)
         elif token.type is CuteType.L_PAREN: return Node(TokenType.LIST, self._parse_expr_list())
@@ -460,7 +455,7 @@ class CuteInterpreter(object):
 
         #item2
         def insertTable(id, value):
-            if id.type is TokenType.ID and value.type in [TokenType.INT, TokenType.LIST]:
+            if id.type is TokenType.ID and value.type in [TokenType.INT, TokenType.LIST, TokenType.TRUE, TokenType.FALSE]:
                 if value.type is TokenType.LIST:
                     if value.value.type is not TokenType.QUOTE:
                         result = self.run_expr(value)
@@ -477,14 +472,22 @@ class CuteInterpreter(object):
                 print("ERROR : Can't insert the id!!")
                 return None
 
+
+        rhs1ForId = rhs1
+        rhs2ForId = rhs2
+
+        if(rhs1.type is TokenType.ID and func_node.type is not TokenType.DEFINE):
+            rhs1 = self.lookuptable(rhs1.value)
+
+        if(rhs2 is not None and rhs2.type is TokenType.ID):
+            rhs2 = self.lookuptable(rhs2.value)
+
         if func_node.type is TokenType.DEFINE:
-            id = rhs1
-            value = rhs2
+            id = rhs1ForId
+            value = rhs2ForId
             insertTable(id, value)
 
         elif func_node.type is TokenType.CAR:
-            if(rhs1.type is TokenType.ID):
-                rhs1 = self.lookuptable(rhs1.value)
             if not is_quote_list(rhs1):
                 print ("car error!")
             result = pop_node_from_quote_list(rhs1)
@@ -493,8 +496,6 @@ class CuteInterpreter(object):
             return create_quote_node(result)
 
         elif func_node.type is TokenType.CDR:
-            if(rhs1.type is TokenType.ID):
-                rhs1 = self.lookuptable(rhs1.value)
             #작성
             if not is_quote_list(rhs1):
                 print ("cdr error!")
@@ -506,11 +507,6 @@ class CuteInterpreter(object):
         elif func_node.type is TokenType.CONS:
             expr_rhs1 = self.run_expr(rhs1)
             expr_rhs2 = self.run_expr(rhs2)
-
-            if(rhs1.type is TokenType.ID):
-                expr_rhs1 = self.lookuptable(rhs1.value)
-            if(rhs2.type is not None and rhs2.type is TokenType.ID):
-                expr_rhs2 = self.lookuptable(rhs2.value)
 
             #작성
             #rhs2는 무조건 list라고 가정
@@ -533,15 +529,8 @@ class CuteInterpreter(object):
                         return self.TRUE_NODE
             return self.FALSE_NODE
 
-
         elif func_node.type is TokenType.EQ_Q:
             #작성
-            if(rhs1.type is TokenType.ID):
-                rhs1 = self.lookuptable(rhs1.value)
-
-            if(rhs2.type is not None and rhs2.type is TokenType.ID):
-                rhs2 = self.lookuptable(rhs2.value)
-
             if rhs1.type is TokenType.INT and rhs2.type is TokenType.INT:
                 if (int)(rhs1.value) == (int)(rhs2.value):
                     return self.TRUE_NODE
@@ -552,34 +541,30 @@ class CuteInterpreter(object):
 
 
         elif func_node.type is TokenType.NULL_Q:
-            if(rhs1.type is TokenType.ID):
-                rhs1 = self.lookuptable(rhs1.value)
             if list_is_null(rhs1):return self.TRUE_NODE
             return self.FALSE_NODE
 
         elif func_node.type is TokenType.NOT:
-            if func_node.type is TokenType.TRUE:
+            if rhs1.type is TokenType.TRUE:
                 return self.FALSE_NODE
-            elif func_node.type is TokenType.FALSE:
+            elif rhs1.type is TokenType.FALSE:
                 return self.TRUE_NODE
 
         elif func_node.type is TokenType.COND:
 
             while rhs1 is not None:
-                if(rhs1.type is TokenType.ID):
-                    rhs1 = self.lookuptable(rhs1.value)
-                if(rhs1.value.type is TokenType.LIST):
+                if(rhs1.value.type is TokenType.ID):
+                    cond = self.lookuptable(rhs1.value.value)
+                elif(rhs1.value.type is TokenType.LIST):
                     cond = self.run_expr(rhs1.value)
                 else:
                     cond = rhs1.value
                 if(cond.type not in [TokenType.TRUE, TokenType.FALSE]):
                     print"Type Error!"
                     return None
-                #print" "
                 if(cond.value is not TokenType.TRUE):
                     rhs1 = rhs1.next
                 return self.run_expr(rhs1.value.next)
-
         else:
             return None
 
@@ -627,7 +612,6 @@ class CuteInterpreter(object):
             print "expected a procedure that can be applied to arguments"
             print "Token Type is ", op_code.value
             return None
-
 
 def print_node(node):
     """
@@ -723,9 +707,9 @@ def Test_All():
     Test_method("( > 1 5 )")
     Test_method("( cond ( ( null? ' ( 1 2 3 ) ) 1 ) ( ( > 100 10 ) 2 ) ( #T 3 ) )")
     """
-    i = ""
-    while(i != 'x'):
-        i = raw_input("> ")
-        print("..."),Test_method(i)
+    while(True):
+        input = raw_input("> ")
+        print("..."),
+        Test_method(input)
 
 Test_All()
