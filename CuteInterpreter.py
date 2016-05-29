@@ -627,7 +627,6 @@ class CuteInterpreter(object):
             print "Token Type is "+ op_code.value
             return None
 
-
 def print_node(node):
     """
     "Evaluation 후 결과를 출력하기 위한 함수"
@@ -722,7 +721,6 @@ def Test_All():
     Test_method("( > 1 5 )")
     Test_method("( cond ( ( null? ' ( 1 2 3 ) ) 1 ) ( ( > 100 10 ) 2 ) ( #T 3 ) )")
     """
-
     while(True):
         input = raw_input("> ")
         print("..."),
