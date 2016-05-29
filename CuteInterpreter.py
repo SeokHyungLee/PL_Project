@@ -460,7 +460,7 @@ class CuteInterpreter(object):
 
         #item2
         def insertTable(id, value):
-            if id.type is TokenType.ID and value.type in [TokenType.INT, TokenType.LIST]:
+            if id.type is TokenType.ID and value.type in [TokenType.INT, TokenType.LIST,TokenType.TRUE,TokenType.FALSE]:
                 if value.type is TokenType.LIST:
                     if value.value.type is not TokenType.QUOTE:
                         result = self.run_expr(value)
@@ -477,10 +477,13 @@ class CuteInterpreter(object):
                 print("ERROR : Can't insert the id!!")
                 return None
 
+
+
         if func_node.type is TokenType.DEFINE:
             id = rhs1
             value = rhs2
             insertTable(id, value)
+
 
         elif func_node.type is TokenType.CAR:
             if(rhs1.type is TokenType.ID):
@@ -564,7 +567,6 @@ class CuteInterpreter(object):
                 return self.TRUE_NODE
 
         elif func_node.type is TokenType.COND:
-
             while rhs1 is not None:
                 if(rhs1.type is TokenType.ID):
                     rhs1 = self.lookuptable(rhs1.value)
@@ -579,7 +581,6 @@ class CuteInterpreter(object):
                 if(cond.value is not TokenType.TRUE):
                     rhs1 = rhs1.next
                 return self.run_expr(rhs1.value.next)
-
         else:
             return None
 
@@ -703,7 +704,7 @@ def Test_method(input):
     node = test_basic_paser.parse_expr()
     cute_inter = CuteInterpreter()
     result = cute_inter.run_expr(node)
-    print print_node(result), result
+    print print_node(result)
 
 def Test_All():
     """
@@ -723,8 +724,7 @@ def Test_All():
     Test_method("( > 1 5 )")
     Test_method("( cond ( ( null? ' ( 1 2 3 ) ) 1 ) ( ( > 100 10 ) 2 ) ( #T 3 ) )")
     """
-    i = ""
-    while(i != 'x'):
+    while(True):
         i = raw_input("> ")
         print("..."),Test_method(i)
 
