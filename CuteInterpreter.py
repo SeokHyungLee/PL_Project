@@ -455,15 +455,13 @@ class CuteInterpreter(object):
 
         #item2
         def insertTable(id, value):
-
             if id.type is TokenType.ID and value.type in [TokenType.INT, TokenType.LIST, TokenType.TRUE, TokenType.FALSE]:
                 if value.type is TokenType.LIST:
                     if value.value.type is not TokenType.QUOTE:
                         result = self.run_expr(value)
                         Dic[id.value] = result
                     else:
-                        result = self.create_quote_node(rhs2)
-                        Dic[id.value] = result
+                        Dic[id.value] = value
                 else:
                     Dic[id.value] = value
                 #사전 내용 찍어보기
@@ -472,7 +470,6 @@ class CuteInterpreter(object):
             else:
                 print("ERROR : Can't insert the id!!")
                 return None
-
 
 
         rhs1ForId = rhs1
@@ -484,12 +481,10 @@ class CuteInterpreter(object):
         if(rhs2 is not None and rhs2.type is TokenType.ID):
             rhs2 = self.lookuptable(rhs2.value)
 
-
         if func_node.type is TokenType.DEFINE:
             id = rhs1ForId
             value = rhs2ForId
             insertTable(id, value)
-
 
         elif func_node.type is TokenType.CAR:
             if not is_quote_list(rhs1):
@@ -613,7 +608,7 @@ class CuteInterpreter(object):
         else:
             print "application: not a procedure;"
             print "expected a procedure that can be applied to arguments"
-            print "Token Type is ", op_code.value
+            print "Token Type is "+ op_code.value
             return None
 
 def print_node(node):
@@ -711,10 +706,8 @@ def Test_All():
     Test_method("( cond ( ( null? ' ( 1 2 3 ) ) 1 ) ( ( > 100 10 ) 2 ) ( #T 3 ) )")
     """
     while(True):
-
         input = raw_input("> ")
         print("..."),
         Test_method(input)
-
 
 Test_All()
