@@ -332,14 +332,14 @@ class CuteInterpreter(object):
                 valueOfRhs1 = (int)(expr_rhs1.value)
             #문자일경우에는 딕셔너리에서 검색해서 해당 value값 사용
             else:
-                valueOfRhs1 = (int)(self.lookuptable(expr_rhs1.value).value)
+                valueOfRhs1 = (int)(self.lookupTable(expr_rhs1.value).value)
 
             #두번째 피연산자가 숫자일경우 그냥 value갑 사용
             if expr_rhs2.type is TokenType.INT:
                 valueOfRhs2 = (int)(expr_rhs2.value)
             #문자일경우에는 딕셔너리에서 검색해서 해당 value값 사용
             else:
-                valueOfRhs2 = (int)(self.lookuptable(expr_rhs2.value).value)
+                valueOfRhs2 = (int)(self.lookupTable(expr_rhs2.value).value)
 
             #각 연산자에 대해서 처리
             if arith_node.type is TokenType.MINUS:
@@ -385,7 +385,7 @@ class CuteInterpreter(object):
             print "Error : Operand is not Number!!"
             return None
 
-    def lookuptable(self, id):
+    def lookupTable(self, id):
         if id in Dic:
             return Dic.get(id)
         else:
@@ -464,22 +464,18 @@ class CuteInterpreter(object):
                         Dic[id.value] = value
                 else:
                     Dic[id.value] = value
-                #사전 내용 찍어보기
-                #print Dic
-
             else:
-                print("ERROR : Can't insert the id!!")
+                print("ERROR : Can't insert in Dic!!")
                 return None
-
 
         rhs1ForId = rhs1
         rhs2ForId = rhs2
 
         if(rhs1.type is TokenType.ID and func_node.type is not TokenType.DEFINE):
-            rhs1 = self.lookuptable(rhs1.value)
+            rhs1 = self.lookupTable(rhs1.value)
 
         if(rhs2 is not None and rhs2.type is TokenType.ID):
-            rhs2 = self.lookuptable(rhs2.value)
+            rhs2 = self.lookupTable(rhs2.value)
 
         if func_node.type is TokenType.DEFINE:
             id = rhs1ForId
@@ -509,14 +505,12 @@ class CuteInterpreter(object):
 
             #작성
             #rhs2는 무조건 list라고 가정
-
             if expr_rhs1.type is TokenType.INT:
                 expr_rhs1 = create_quote_node(expr_rhs1)
             expr_rhs1 = expr_rhs1.value.next
             expr_rhs2 = pop_node_from_quote_list(expr_rhs2)
             expr_rhs1.next = expr_rhs2
             return create_quote_node(expr_rhs1,True)
-
 
 
         elif func_node.type is TokenType.ATOM_Q:
@@ -527,6 +521,7 @@ class CuteInterpreter(object):
                     if rhs1.value.next is not TokenType.LIST:
                         return self.TRUE_NODE
             return self.FALSE_NODE
+
 
         elif func_node.type is TokenType.EQ_Q:
             #작성
@@ -543,16 +538,18 @@ class CuteInterpreter(object):
             if list_is_null(rhs1):return self.TRUE_NODE
             return self.FALSE_NODE
 
+
         elif func_node.type is TokenType.NOT:
             if rhs1.type is TokenType.TRUE:
                 return self.FALSE_NODE
             elif rhs1.type is TokenType.FALSE:
                 return self.TRUE_NODE
 
+
         elif func_node.type is TokenType.COND:
             while rhs1 is not None:
                 if(rhs1.value.type is TokenType.ID):
-                    cond = self.lookuptable(rhs1.value.value)
+                    cond = self.lookupTable(rhs1.value.value)
                 elif(rhs1.value.type is TokenType.LIST):
                     cond = self.run_expr(rhs1.value)
                 else:
@@ -560,9 +557,10 @@ class CuteInterpreter(object):
                 if(cond.type not in [TokenType.TRUE, TokenType.FALSE]):
                     print"Type Error!"
                     return None
-                if(cond.value is not TokenType.TRUE):
+                if(cond.type is not TokenType.TRUE):
                     rhs1 = rhs1.next
                 return self.run_expr(rhs1.value.next)
+
         else:
             return None
 
