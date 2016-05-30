@@ -557,9 +557,11 @@ class CuteInterpreter(object):
                 if(cond.type not in [TokenType.TRUE, TokenType.FALSE]):
                     print"Type Error!"
                     return None
-                if(cond.type is not TokenType.TRUE):
+                if(cond.type is TokenType.TRUE):
+                    return self.run_expr(rhs1.value.next)
+                else:
                     rhs1 = rhs1.next
-                return self.run_expr(rhs1.value.next)
+
 
         else:
             return None
