@@ -390,7 +390,7 @@ class CuteInterpreter(object):
             return Dic.get(id)
         else:
             print "Error : id is not in Dic!!"
-            return None;
+            return None
 
     def run_func(self, func_node):
         rhs1 = func_node.next
@@ -562,6 +562,20 @@ class CuteInterpreter(object):
                 else:
                     rhs1 = rhs1.next
 
+        #Lambda 구현
+        elif func_node.type is TokenType.LIST:
+            if func_node.value.type is TokenType.LAMBDA:
+                lamrhs1 = func_node.value
+                lamrhs2 = func_node.next
+
+                insertTable(lamrhs1.next.value, lamrhs2)
+                return self.run_expr(lamrhs1.next.next)
+        #전역함수 호출
+        elif func_node.type is TokenType.ID:
+            param = self.lookupTable(func_node.value)
+            p_node = Node(TokenType.LIST, param)
+            p_node.value.next = func_node.next
+            return self.run_expr(p_node)
 
         else:
             return None
@@ -605,6 +619,18 @@ class CuteInterpreter(object):
 
         if op_code.type is TokenType.QUOTE:
             return l_node
+        #lambda 후 인자가 없을때 그냥 출력
+        if op_code.type is TokenType.LAMBDA:
+            return l_node
+        #lambda 후 인자를 넣어줬을때 결과값 나옴
+        #Dic 초기화 부분은 아직 구현하지 않음
+        if op_code.next.type in [TokenType.INT, TokenType.LIST]:
+            result = self.run_func(op_code)
+            return result
+
+        if op_code.type is TokenType.ID:
+            f_node = self.lookupTable(op_code.value)
+            return self.run_func(f_node)
         else:
             print "application: not a procedure;"
             print "expected a procedure that can be applied to arguments"
