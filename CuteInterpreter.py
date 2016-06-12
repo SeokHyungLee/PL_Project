@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from string import letters, digits
 
-Dic = {}
+globalDic = {}
+localDic = {}
+arr = []
 
 class CuteType:
     INT=1
@@ -50,8 +52,6 @@ def is_type_keyword(token):
     return False
 
 
-
-
 def _get_keyword_type(token):
     return {
         'define':CuteType.DEFINE,
@@ -79,6 +79,7 @@ def is_type_binaryOp(token):
     if token.type in CuteType.BINARYOP_LIST:
         return True
     return False
+
 def is_type_boolean(token):
     """
     :type token:Token
@@ -311,12 +312,10 @@ class BasicPaser(object):
         return head
 
 class CuteInterpreter(object):
-
     TRUE_NODE = Node(TokenType.TRUE)
     FALSE_NODE = Node(TokenType.FALSE)
 
     def run_arith(self, arith_node):
-
         rhs1 = arith_node.next
         rhs2 = rhs1.next if rhs1.next is not None else None
 
@@ -332,14 +331,14 @@ class CuteInterpreter(object):
                 valueOfRhs1 = (int)(expr_rhs1.value)
             #문자일경우에는 딕셔너리에서 검색해서 해당 value값 사용
             else:
-                valueOfRhs1 = (int)(self.lookupTable(expr_rhs1.value).value)
+                valueOfRhs1 = (int)(self.lookupTable(expr_rhs1).value)
 
             #두번째 피연산자가 숫자일경우 그냥 value갑 사용
             if expr_rhs2.type is TokenType.INT:
                 valueOfRhs2 = (int)(expr_rhs2.value)
             #문자일경우에는 딕셔너리에서 검색해서 해당 value값 사용
             else:
-                valueOfRhs2 = (int)(self.lookupTable(expr_rhs2.value).value)
+                valueOfRhs2 = (int)(self.lookupTable(expr_rhs2).value)
 
             #각 연산자에 대해서 처리
             if arith_node.type is TokenType.MINUS:
@@ -386,15 +385,52 @@ class CuteInterpreter(object):
             return None
 
     def lookupTable(self, id):
-        if id in Dic:
-            return Dic.get(id)
+        """
+        if id in localDic:
+            return localDic.get(id)
+        elif id in globalDic:
+            return globalDic.get(id)
         else:
             print "Error : id is not in Dic!!"
             return None
+        """
+        if id is None:
+            return None
+        else:
+            if id.value in localDic:
+                return localDic[id.value]
+            elif id.value in globalDic:
+                return globalDic[id.value]
+            else:
+                return id
+
+        """
+        if id is not None :
+            if id.value in globalDic:
+                return globalDic[id.value]
+            else:
+                return id
+        else :
+            return None
+        """
 
     def run_func(self, func_node):
-        rhs1 = func_node.next
+
+        """
+        if func_node.next is None :
+                rhs1 = func_node.value
+        else :
+            if func_node.next.type is TokenType.INT :
+                rhs1 = func_node.value
+            else :
+                rhs1 = func_node.next
+        """
+        if func_node.next is None :
+            rhs1 = func_node.value
+        else :rhs1 = func_node.next
         rhs2 = rhs1.next if rhs1.next is not None else None
+
+
 
         def create_quote_node(node, list_flag = False):
             """
@@ -459,11 +495,11 @@ class CuteInterpreter(object):
                 if value.type is TokenType.LIST:
                     if value.value.type is not TokenType.QUOTE:
                         result = self.run_expr(value)
-                        Dic[id.value] = result
+                        globalDic[id.value] = result
                     else:
-                        Dic[id.value] = value
+                        globalDic[id.value] = value
                 else:
-                    Dic[id.value] = value
+                    globalDic[id.value] = value
             else:
                 print("ERROR : Can't insert in Dic!!")
                 return None
@@ -471,11 +507,16 @@ class CuteInterpreter(object):
         rhs1ForId = rhs1
         rhs2ForId = rhs2
 
+        rhs1 = self.lookupTable(rhs1)
+        rhs2 = self.lookupTable(rhs2)
+
+
+
         if(rhs1.type is TokenType.ID and func_node.type is not TokenType.DEFINE):
-            rhs1 = self.lookupTable(rhs1.value)
+            rhs1 = self.lookupTable(rhs1)
 
         if(rhs2 is not None and rhs2.type is TokenType.ID):
-            rhs2 = self.lookupTable(rhs2.value)
+            rhs2 = self.lookupTable(rhs2)
 
         if func_node.type is TokenType.DEFINE:
             id = rhs1ForId
@@ -545,11 +586,10 @@ class CuteInterpreter(object):
             elif rhs1.type is TokenType.FALSE:
                 return self.TRUE_NODE
 
-
         elif func_node.type is TokenType.COND:
             while rhs1 is not None:
                 if(rhs1.value.type is TokenType.ID):
-                    cond = self.lookupTable(rhs1.value.value)
+                    cond = self.lookupTable(rhs1.value)
                 elif(rhs1.value.type is TokenType.LIST):
                     cond = self.run_expr(rhs1.value)
                 else:
@@ -567,13 +607,20 @@ class CuteInterpreter(object):
             if func_node.value.type is TokenType.LAMBDA:
                 lamrhs1 = func_node.value
                 lamrhs2 = func_node.next
+                if lamrhs2 is None :
+                    return self.run_expr(lamrhs1.next.next)
+                else :
+                    #insertTable(lamrhs1.next.value, lamrhs2)
+                    if lamrhs1.next.value.value not in localDic:
+                        localDic[lamrhs1.next.value.value] = lamrhs2
+                    #arr.insert(len(arr), lamrhs1.next.value.value)
+                    return self.run_expr(lamrhs1.next.next)
 
-                insertTable(lamrhs1.next.value, lamrhs2)
-                return self.run_expr(lamrhs1.next.next)
         #전역함수 호출
         elif func_node.type is TokenType.ID:
-            param = self.lookupTable(func_node.value)
-            p_node = Node(TokenType.LIST, param)
+            param = self.lookupTable(func_node)
+            p_node = Node(TokenType.LIST)
+            p_node.value = param
             p_node.value.next = func_node.next
             return self.run_expr(p_node)
 
@@ -629,8 +676,9 @@ class CuteInterpreter(object):
             return result
 
         if op_code.type is TokenType.ID:
-            f_node = self.lookupTable(op_code.value)
+            f_node = self.lookupTable(op_code)
             return self.run_func(f_node)
+
         else:
             print "application: not a procedure;"
             print "expected a procedure that can be applied to arguments"
@@ -712,6 +760,12 @@ def Test_method(input):
     cute_inter = CuteInterpreter()
     result = cute_inter.run_expr(node)
     print print_node(result)
+    localDic.clear()
+
+    """
+    for i in range(0, len(arr)):
+        del globalDic[arr.pop()]
+    """
 
 def Test_All():
     """
